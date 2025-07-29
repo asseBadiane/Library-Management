@@ -1,0 +1,36 @@
+# spring.application.name=eureka-server
+
+
+# eureka-server/src/main/resources/application.yml
+server:
+  port: ${EUREKA_SERVER_PORT:8761}
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: ${EUREKA_HOSTNAME:localhost}
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    enable-self-preservation: false
+
+# ---
+# spring:
+#   config:
+#     activate:
+#       on-profile: docker
+
+# eureka:
+#   instance:
+#     hostname: eureka-server
+#     prefer-ip-address: true
+#   client:
+#     service-url:
+#       defaultZone: http://eureka-server:8761/eureka/
+
