@@ -1,0 +1,9 @@
+FROM openjdk:17-jre-slim
+
+WORKDIR /app
+
+COPY target/api-gateway-1.0.0.jar api-gateway.jar
+
+EXPOSE 8081
+
+ENTRYPOINT ["java", "-jar", "api-gateway.jar"]
