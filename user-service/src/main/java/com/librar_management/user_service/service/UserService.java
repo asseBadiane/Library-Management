@@ -68,7 +68,7 @@ public class UserService {
         User savedUser = userRepository.save(user);
         
         // Publish user created event
-        userEventProducer.publishUserDeactivated(savedUser);
+        userEventProducer.sendUserCreatedEvent(savedUser);
         
         logger.info("User created successfully with ID: {}", savedUser.getId());
         return new UserResponseDto(savedUser);

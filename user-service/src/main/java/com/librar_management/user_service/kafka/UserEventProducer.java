@@ -5,9 +5,12 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import com.librar_management.user_service.enums.UserRole;
+import com.librar_management.user_service.event.UserEvent;
 import com.librar_management.user_service.model.User;
 
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDateTime;
 
 
 @Component
@@ -25,23 +28,53 @@ public class UserEventProducer {
     @Value("${kafka.topic.user-deactivated}")
     private String userDeactivatedTopic;
 
-    public void sendUserCreatedEvent(Object event) {
+    public void sendUserCreatedEvent(User user) {
+        UserEvent event = new UserEvent();
+        event.setEventType("USER_CREATED");
+        event.setUserId(user.getId());
+        event.setEmail(user.getEmail());
+        event.setFirstName(user.getFirstName());
+        event.setLastName(user.getLastName());
+        event.setRole(user.getRole().name());
+        event.setTimestamp(LocalDateTime.now());
+        event.setDetails("User account created");
+        
         kafkaTemplate.send(userCreatedTopic, event);
     }
 
-    public void sendUserUpdatedEvent(Object event) {
+    public void sendUserUpdatedEvent(User user) {
+        UserEvent event = new UserEvent();
+        event.setEventType("USER_UPDATED");
+        event.setUserId(user.getId());
+        event.setEmail(user.getEmail());
+        event.setFirstName(user.getFirstName());
+        event.setLastName(user.getLastName());
+        event.setRole(user.getRole().name());
+        event.setTimestamp(LocalDateTime.now());
+        event.setDetails("User account updated");
+        
         kafkaTemplate.send(userUpdatedTopic, event);
     }
 
-    public void sendUserDeactivatedEvent(Object event) {
+    public void sendUserDeactivatedEvent(User user) {
+        UserEvent event = new UserEvent();
+        event.setEventType("USER_DEACTIVATED");
+        event.setUserId(user.getId());
+        event.setEmail(user.getEmail());
+        event.setFirstName(user.getFirstName());
+        event.setLastName(user.getLastName());
+        event.setRole(user.getRole().name());
+        event.setTimestamp(LocalDateTime.now());
+        event.setDetails("User account deactivated");
+        
         kafkaTemplate.send(userDeactivatedTopic, event);
     }
 
-    public void publishUserDeactivated(User savedUser) {
-     kafkaTemplate.send(userDeactivatedTopic, savedUser);
+    public void publishUserDeactivated(User user) {
+        sendUserDeactivatedEvent(user);
     }
 
-    public void publishUserUpdated(User updatedUser, UserRole oldRole) {
-        kafkaTemplate.send(userUpdatedTopic, updatedUser);
+    public void publishUserUpdated(User user, UserRole oldRole) {
+        sendUserUpdatedEvent(user);
     }
 }
