@@ -34,13 +34,13 @@ spring:
         enable.auto.commit: false
       enable-auto-commit: false
     listener:
-      ack-mode: manual_immediate
+      ack-mode: manual-immediate
   
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:your-email@gmail.com}
-    password: ${MAIL_PASSWORD:your-app-password}
+    username: ${MAIL_USERNAME:reddingcode732@gmail.com}
+    password: ${MAIL_PASSWORD:nmeq vvia ylls iiis}
     properties:
       mail:
         smtp:
@@ -76,25 +76,25 @@ management:
       show-details: always
 
 # Logging Configuration
-logging:
-  level:
-    org.springframework.kafka: DEBUG
-    com.library_management.notification_service: DEBUG
-    org.springframework.mail: DEBUG
+# logging:
+#   level:
+#     org.springframework.kafka: DEBUG
+#     com.library_management.notification_service: DEBUG
+#     org.springframework.mail: DEBUG
 
----
-spring:
-  config:
-    activate:
-      on-profile: docker
+# ---
+# spring:
+#   config:
+#     activate:
+#       on-profile: docker
 
-  datasource:
-    url: jdbc:postgresql://postgres:5432/library_db
+#   datasource:
+#     url: jdbc:postgresql://postgres:5432/library_db
   
-  kafka:
-    bootstrap-servers: kafka:9092
+#   kafka:
+#     bootstrap-servers: kafka:9092
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+# eureka:
+#   client:
+#     service-url:
+#       defaultZone: http://eureka-server:8761/eureka/

@@ -19,7 +19,7 @@ public class NotificationEventListener {
     
     private final NotificationService notificationService;
     
-    @KafkaListener(topics = "user-events", groupId = "notification-service-group")
+    @KafkaListener(topics = {"user-created", "user-updated", "user-deactivated"}, groupId = "notification-service-group")
     public void handleUserEvent(
             @Payload UserEvent event,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -27,7 +27,7 @@ public class NotificationEventListener {
             @Header(KafkaHeaders.OFFSET) long offset,
             Acknowledgment acknowledgment) {
         
-        log.info("Received user event from topic: {}, partition: {}, offset: {}, event: {}", 
+        log.info("Received user event from topic: {}, partition: {}, offset: {}, event: {}",
                 topic, partition, offset, event.getEventType());
         
         try {
@@ -41,7 +41,7 @@ public class NotificationEventListener {
         }
     }
     
-    @KafkaListener(topics = "borrow-events", groupId = "notification-service-group")
+    @KafkaListener(topics = {"borrow-requested", "borrow-approved", "borrow-rejected", "book-borrowed", "book-returned", "borrow-overdue", "borrow-due-soon"}, groupId = "notification-service-group")
     public void handleBorrowEvent(
             @Payload BorrowEvent event,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -49,7 +49,7 @@ public class NotificationEventListener {
             @Header(KafkaHeaders.OFFSET) long offset,
             Acknowledgment acknowledgment) {
         
-        log.info("Received borrow event from topic: {}, partition: {}, offset: {}, event: {}", 
+        log.info("Received borrow event from topic: {}, partition: {}, offset: {}, event: {}",
                 topic, partition, offset, event.getEventType());
         
         try {
@@ -62,7 +62,7 @@ public class NotificationEventListener {
         }
     }
     
-    @KafkaListener(topics = "book-events", groupId = "notification-service-group")
+    @KafkaListener(topics = {"book-added", "book-updated", "book-deleted", "book-status-changed"}, groupId = "notification-service-group")
     public void handleBookEvent(
             @Payload String bookEventJson,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -70,7 +70,7 @@ public class NotificationEventListener {
             @Header(KafkaHeaders.OFFSET) long offset,
             Acknowledgment acknowledgment) {
         
-        log.info("Received book event from topic: {}, partition: {}, offset: {}", 
+        log.info("Received book event from topic: {}, partition: {}, offset: {}",
                 topic, partition, offset);
         
         try {
