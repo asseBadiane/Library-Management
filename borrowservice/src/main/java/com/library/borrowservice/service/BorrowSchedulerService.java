@@ -48,7 +48,7 @@ public class BorrowSchedulerService {
                 "Book is overdue"
             );
             
-            kafkaTemplate.send("borrow-events", event);
+            kafkaTemplate.send("borrow-overdue", event);
         }
         
         log.info("Found and updated {} overdue books", overdueRecords.size());
@@ -77,7 +77,7 @@ public class BorrowSchedulerService {
                 "Book is due soon - Due date: " + record.getDueDate()
             );
             
-            kafkaTemplate.send("borrow-events", event);
+            kafkaTemplate.send("borrow-due-soon", event);
         }
         
         log.info("Sent due soon notifications for {} books", dueSoonRecords.size());

@@ -252,7 +252,39 @@ public class BorrowService {
             details
         );
         
-        kafkaTemplate.send("borrow-events", event);
-        log.info("Published borrow event: {}", eventType);
+        // Determine the correct topic based on event type
+        String topic;
+        switch (eventType) {
+            case "BORROW_REQUESTED":
+                topic = "borrow-requested";
+                break;
+            case "BORROW_APPROVED":
+                topic = "borrow-approved";
+                break;
+            case "BORROW_REJECTED":
+                topic = "borrow-rejected";
+                break;
+            case "BOOK_BORROWED":
+                topic = "book-borrowed";
+                break;
+            case "BOOK_RETURNED":
+                topic = "book-returned";
+                break;
+            case "BORROW_OVERDUE":
+                topic = "borrow-overdue";
+                break;
+            case "DUE_DATE_EXTENDED":
+                topic = "due-date-extended";
+                break;
+            case "BORROW_DUE_SOON":
+                topic = "borrow-due-soon";
+                break;
+            default:
+                topic = "borrow-events";
+                break;
+        }
+        
+        kafkaTemplate.send(topic, event);
+        log.info("Published borrow event: {} to topic: {}", eventType, topic);
     }
 }
