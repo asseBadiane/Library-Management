@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 public class BookEventService {
     
     private static final Logger logger = LoggerFactory.getLogger(BookEventService.class);
-    private static final String BOOK_EVENTS_TOPIC = "book-events";
     
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -49,27 +48,47 @@ public class BookEventService {
             
             String eventJson = objectMapper.writeValueAsString(eventDto);
             
-            logger.info("Publishing book event: {} for book ID: {}", eventType, book.getId());
+            // Determine the correct topic based on event type
+            String topic;
+            switch (eventType) {
+                case "BOOK_ADDED":
+                    topic = "book-added";
+                    break;
+                case "BOOK_UPDATED":
+                    topic = "book-updated";
+                    break;
+                case "BOOK_DELETED":
+                    topic = "book-deleted";
+                    break;
+                case "BOOK_STATUS_CHANGED":
+                    topic = "book-status-changed";
+                    break;
+                default:
+                    topic = "book-events";
+                    break;
+            }
+            
+            logger.info("Publishing book event: {} for book ID: {} to topic: {}", eventType, book.getId(), topic);
             
             // Use book ID as partition key for ordering
             CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(
-                BOOK_EVENTS_TOPIC, 
-                book.getId().toString(), 
+                topic,
+                book.getId().toString(),
                 eventJson
             );
             
             future.whenComplete((result, ex) -> {
                 if (ex != null) {
-                    logger.error("Failed to publish book event: {} for book ID: {}", 
-                               eventType, book.getId(), ex);
+                    logger.error("Failed to publish book event: {} for book ID: {} to topic: {}",
+                               eventType, book.getId(), topic, ex);
                 } else {
-                    logger.info("Book event published successfully: {} for book ID: {} to partition: {}", 
-                               eventType, book.getId(), result.getRecordMetadata().partition());
+                    logger.info("Book event published successfully: {} for book ID: {} to topic: {} partition: {}",
+                               eventType, book.getId(), topic, result.getRecordMetadata().partition());
                 }
             });
             
         } catch (JsonProcessingException e) {
-            logger.error("Failed to serialize book event: {} for book ID: {}", 
+            logger.error("Failed to serialize book event: {} for book ID: {}",
                         eventType, book.getId(), e);
         } finally {
             MDC.clear();
