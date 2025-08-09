@@ -1,0 +1,195 @@
+version: '3.8'
+
+
+services:
+  # =============================================================================
+  # BASES DE DONNÉES
+  # =============================================================================
+   
+  # PostgreSQL pour les services transactionnels
+  postgres:
+    image: postgres:15
+    container_name: library-manager-postgres
+    environment:
+      POSTGRES_DB: library_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # - ./databases/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - library-network
+  
+  
+  # =============================================================================
+  # MESSAGE BROKER
+  # =============================================================================
+   
+  # Zookeeper (requis pour Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: library-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - library-network
+  
+  
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: library-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    ports:
+      - "9092:9092"
+    networks:
+      - library-network
+    restart: unless-stopped
+  
+  
+  # =============================================================================
+  # MICROSERVICES
+  # =============================================================================
+   
+  # Eureka Service Discovery
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - library-network
+  
+  # # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: dockerfile
+    container_name: api-gateway
+    ports:
+      - "8081:8081"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    depends_on:
+      - eureka-server
+    networks:
+      - library-network
+  
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: dockerfile
+    container_name: user-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/library_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+    networks:
+      - library-network
+  
+  # Book Service
+  book-service:
+    build:
+      context: ./bookservice
+      dockerfile: dockerfile
+    container_name: book-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/library_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+    networks:
+      - library-network
+  
+  # Borrow Service
+  borrow-service:
+    build:
+      context: ./borrowservice
+      dockerfile: dockerfile
+    container_name: borrow-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/library_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+    networks:
+      - library-network
+  
+  # # Notification Service
+  notification-service:
+    build:
+      context: ./notificationservice
+      dockerfile: dockerfile
+    container_name: notification-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/library_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=your-email@gmail.com
+      - SPRING_MAIL_PASSWORD=your-app-password
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    ports:
+      - "8085:8085"
+    depends_on:
+      - postgres
+      - kafka
+      - eureka-server
+    networks:
+      - library-network
+  
+  
+  # =============================================================================
+  # VOLUMES
+  # =============================================================================
+volumes:
+  postgres_data:
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  library-network:
+    driver: bridge
+
